@@ -4,13 +4,12 @@
          release builds must declare it here or networking silently fails. -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
-    <!-- Hands-free voice (Deepgram). NOT requested yet: on Android the mic/audio
-         layer is currently a no-op stub
-         (lib/data/voice_session/voice_audio_io_stub.dart), so the voice tab is
-         silent on device. Uncomment both once a native mic capture plugin
-         (e.g. package:record) is wired into a non-web voice_audio_io impl. -->
-    <!-- <uses-permission android:name="android.permission.RECORD_AUDIO"/> -->
-    <!-- <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/> -->
+    <!-- Hands-free voice (Deepgram). Mic capture is wired via package:record in
+         lib/data/voice_session/voice_audio_io_io.dart; RECORD_AUDIO is requested
+         at runtime on first use. MODIFY_AUDIO_SETTINGS supports echo-cancel /
+         noise-suppress in the vehicle cabin. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
 
     <application
         android:label="SOS Emergency"

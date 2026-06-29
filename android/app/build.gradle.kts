@@ -19,7 +19,9 @@ android {
         applicationId = "com.example.sos_emergency"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // package:record requires Android 6.0 (API 23); raise the floor if the
+        // Flutter default is lower.
+        minSdk = maxOf(23, flutter.minSdkVersion)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
