@@ -6,10 +6,10 @@
   cleartext to the local dev hosts below. Everything else still requires HTTPS,
   so a deployed (https://) backend needs no change here.
 
-  Reach your dev backend with a matching --dart-define=BACKEND_BASE=...:
-    - Android emulator -> http://10.0.2.2:8000   (10.0.2.2 = your host machine)
-    - Physical device  -> http://<your-LAN-IP>:8000  (add that IP below)
-    - adb reverse       -> http://localhost:8000  (after: adb reverse tcp:8000 tcp:8000)
+  Reach your dev backend with a matching dart-define (BACKEND_BASE=...):
+    - Android emulator: http://10.0.2.2:8000   (10.0.2.2 = your host machine)
+    - Physical device:  http://[your-LAN-IP]:8000  (add that IP below)
+    - adb reverse:       http://localhost:8000  (after: adb reverse tcp:8000 tcp:8000)
 -->
 <network-security-config>
     <!-- Secure by default: every domain not listed below must use HTTPS. -->
