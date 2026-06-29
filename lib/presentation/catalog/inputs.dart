@@ -125,6 +125,9 @@ class _ChoiceCarousel extends StatelessWidget {
 
   static const double _cardWidth = 208;
   static const double _cardHeight = 188;
+  // Per-card scroll stride: card + the gap that follows it. The carousel snaps
+  // to multiples of this so a card always rests against the leading edge.
+  static const double _stride = _cardWidth + SosTokens.space3;
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +136,7 @@ class _ChoiceCarousel extends StatelessWidget {
       height: _cardHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        physics: const ClampingScrollPhysics(),
+        physics: const _SnapScrollPhysics(itemExtent: _stride),
         itemCount: children.length,
         separatorBuilder: (_, _) => const SizedBox(width: SosTokens.space3),
         itemBuilder: (context, i) => SizedBox(
@@ -143,6 +146,58 @@ class _ChoiceCarousel extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Snaps a horizontal scroll to whole-card boundaries (multiples of
+/// [itemExtent]), so a flick settles with a card aligned to the leading edge
+/// rather than stopping mid-card.
+class _SnapScrollPhysics extends ScrollPhysics {
+  const _SnapScrollPhysics({required this.itemExtent, super.parent});
+
+  final double itemExtent;
+
+  @override
+  _SnapScrollPhysics applyTo(ScrollPhysics? ancestor) =>
+      _SnapScrollPhysics(itemExtent: itemExtent, parent: buildParent(ancestor));
+
+  double _snapTarget(ScrollMetrics position, double velocity) {
+    final tolerance = toleranceFor(position);
+    var page = position.pixels / itemExtent;
+    // Bias toward the next/previous card when the flick has real intent.
+    if (velocity < -tolerance.velocity) {
+      page -= 0.5;
+    } else if (velocity > tolerance.velocity) {
+      page += 0.5;
+    }
+    final target = page.roundToDouble() * itemExtent;
+    return target.clamp(position.minScrollExtent, position.maxScrollExtent);
+  }
+
+  @override
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) {
+    // Let the parent handle overscroll at the ends.
+    if ((velocity <= 0 && position.pixels <= position.minScrollExtent) ||
+        (velocity >= 0 && position.pixels >= position.maxScrollExtent)) {
+      return super.createBallisticSimulation(position, velocity);
+    }
+    final target = _snapTarget(position, velocity);
+    if ((target - position.pixels).abs() < toleranceFor(position).distance) {
+      return null;
+    }
+    return ScrollSpringSimulation(
+      spring,
+      position.pixels,
+      target,
+      velocity,
+      tolerance: toleranceFor(position),
+    );
+  }
+
+  @override
+  bool get allowImplicitScrolling => false;
 }
 
 /// `YesNoLarge` — two half-surface targets for one critical yes/no. Voice-
