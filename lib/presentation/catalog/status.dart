@@ -7,6 +7,7 @@ import 'package:sos_emergency/domain/models/severity.dart';
 import 'package:sos_emergency/presentation/catalog/shared/sos_chrome.dart';
 import 'package:sos_emergency/presentation/catalog/shared/sos_icons.dart';
 import 'package:sos_emergency/presentation/surface/binding_resolver.dart';
+import 'package:sos_emergency/presentation/surface/surface_metrics.dart';
 import 'package:sos_emergency/presentation/surface/surface_theme_providers.dart';
 
 /// `GuidanceCallout` — the single most important instruction, AI imperative
@@ -125,20 +126,21 @@ Widget buildCountdownCard(BuildContext context, WidgetRef ref, A2uiNode node) {
   final message =
       ref.resolveString(node, 'message') ?? 'Calling 911 automatically';
   final progress = total == 0 ? 0.0 : secondsLeft / total;
+  final ringSize = SurfaceMetrics.of(context).countdownCircle;
 
   return SosCard(
     palette: palette,
     child: Row(
       children: [
         SizedBox(
-          width: 128,
-          height: 128,
+          width: ringSize,
+          height: ringSize,
           child: Stack(
             alignment: Alignment.center,
             children: [
               SizedBox(
-                width: 128,
-                height: 128,
+                width: ringSize,
+                height: ringSize,
                 child: CircularProgressIndicator(
                   value: progress.clamp(0.0, 1.0),
                   strokeWidth: 10,

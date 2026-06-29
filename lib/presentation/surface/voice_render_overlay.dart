@@ -21,6 +21,12 @@ class VoiceRenderOverlay extends ConsumerWidget {
 
     final session = ref.watch(voiceEmergencySessionProvider);
     final isError = surfaceId == null && error != null;
+    // Cap the sheet to a fraction of the window so it never swallows a short
+    // landscape screen (e.g. AAOS 720 dp, where a fixed 360 dp covered half).
+    final overlayHeight = (MediaQuery.sizeOf(context).height * 0.6).clamp(
+      240.0,
+      360.0,
+    );
     return Align(
       alignment: Alignment.bottomCenter,
       child: Material(
@@ -30,7 +36,7 @@ class VoiceRenderOverlay extends ConsumerWidget {
         ),
         clipBehavior: Clip.antiAlias,
         child: SizedBox(
-          height: 360,
+          height: overlayHeight,
           width: double.infinity,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

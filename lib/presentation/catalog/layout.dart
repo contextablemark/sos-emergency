@@ -9,6 +9,7 @@ import 'package:sos_emergency/presentation/catalog/shared/sos_icons.dart';
 import 'package:sos_emergency/presentation/surface/a2ui_renderer.dart';
 import 'package:sos_emergency/presentation/surface/binding_resolver.dart';
 import 'package:sos_emergency/presentation/surface/surface_actions.dart';
+import 'package:sos_emergency/presentation/surface/surface_metrics.dart';
 import 'package:sos_emergency/presentation/surface/surface_theme_providers.dart';
 
 /// `EmergencyRoot` — the Surface root every screen mounts into. The AI fills
@@ -17,6 +18,7 @@ import 'package:sos_emergency/presentation/surface/surface_theme_providers.dart'
 /// Inputs: `tier`, `theme`, `carState`. Children are the AI-composed surface.
 Widget buildEmergencyRoot(BuildContext context, WidgetRef ref, A2uiNode node) {
   final palette = ref.watch(surfacePaletteProvider);
+  final metrics = SurfaceMetrics.of(context);
   return Row(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
@@ -37,11 +39,12 @@ Widget buildEmergencyRoot(BuildContext context, WidgetRef ref, A2uiNode node) {
       ),
       const SizedBox(width: SosTokens.space5),
       SizedBox(
-        width: 150,
+        width: metrics.railWidth,
         child: _SafetyRail(
           palette: palette,
           onCall: ref.callEmergencyNow,
           onShare: ref.toggleLocationSharing,
+          onVoice: ref.toggleVoice,
         ),
       ),
     ],
@@ -53,11 +56,13 @@ class _SafetyRail extends StatelessWidget {
     required this.palette,
     required this.onCall,
     required this.onShare,
+    required this.onVoice,
   });
 
   final SurfacePalette palette;
   final VoidCallback onCall;
   final VoidCallback onShare;
+  final VoidCallback onVoice;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +70,8 @@ class _SafetyRail extends StatelessWidget {
       children: [
         Text('ALWAYS ON', style: SosText.label(palette.textMuted)),
         const SizedBox(height: SosTokens.space3),
+        // The 911 square keeps its 1:1 ratio; on a short window the whole rail
+        // narrows via `railWidth`, which shrinks this button with it.
         AspectRatio(
           aspectRatio: 1,
           child: _Tappable(
@@ -123,10 +130,20 @@ class _SafetyRail extends StatelessWidget {
           ),
         ),
         const SizedBox(height: SosTokens.space3),
-        _RailTile(
-          color: palette.surface,
-          border: palette.textMuted.withValues(alpha: 0.2),
-          child: Icon(SosIcons.resolve('voice'), color: palette.textMuted),
+        // Always-visible voice entry — the primary voice control on short
+        // windows where the inline PushToTalk card is dropped.
+        Semantics(
+          button: true,
+          label: 'Voice assistant',
+          child: _Tappable(
+            onTap: onVoice,
+            radius: SosTokens.radiusSm,
+            child: _RailTile(
+              color: palette.surface,
+              border: palette.textMuted.withValues(alpha: 0.2),
+              child: Icon(SosIcons.resolve('voice'), color: palette.textMuted),
+            ),
+          ),
         ),
       ],
     );
@@ -207,7 +224,7 @@ Widget buildActionStack(BuildContext context, WidgetRef ref, A2uiNode node) {
     return _ActionTile(
       palette: palette,
       data: parsed.first,
-      height: SosTokens.touchPanic,
+      height: SurfaceMetrics.of(context).panicSize,
       emphatic: true,
     );
   }

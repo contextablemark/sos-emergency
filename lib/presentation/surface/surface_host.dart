@@ -6,6 +6,7 @@ import 'package:sos_emergency/domain/models/emergency_enums.dart';
 import 'package:sos_emergency/domain/models/surface_brightness.dart';
 import 'package:sos_emergency/presentation/surface/a2ui_renderer.dart';
 import 'package:sos_emergency/presentation/surface/surface_actions.dart';
+import 'package:sos_emergency/presentation/surface/surface_metrics.dart';
 import 'package:sos_emergency/presentation/surface/surface_theme_providers.dart';
 import 'package:sos_emergency/presentation/surface/voice_render_overlay.dart';
 
@@ -36,7 +37,16 @@ class SurfaceHost extends ConsumerWidget {
                       SosTokens.space12,
                       SosTokens.space12,
                     ),
-                    child: A2uiRenderer(node: surface.root),
+                    // Expose window-derived sizing so the catalog can adapt to
+                    // short landscape windows (e.g. AAOS 1408×720) instead of
+                    // clipping fixed components. The window height is exact and
+                    // cleanly separates AAOS (720) from tablet (834+).
+                    child: SurfaceMetricsScope(
+                      metrics: SurfaceMetrics.forWindowHeight(
+                        MediaQuery.sizeOf(context).height,
+                      ),
+                      child: A2uiRenderer(node: surface.root),
+                    ),
                   ),
                 ),
               ],

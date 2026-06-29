@@ -7,6 +7,7 @@ import 'package:sos_emergency/domain/models/severity.dart';
 import 'package:sos_emergency/presentation/catalog/shared/sos_chrome.dart';
 import 'package:sos_emergency/presentation/catalog/shared/sos_icons.dart';
 import 'package:sos_emergency/presentation/surface/binding_resolver.dart';
+import 'package:sos_emergency/presentation/surface/surface_metrics.dart';
 import 'package:sos_emergency/presentation/surface/surface_theme_providers.dart';
 
 /// `SafeRouteMap` — a map layer that only ever routes to safety (police, fire,
@@ -26,7 +27,7 @@ Widget buildSafeRouteMap(BuildContext context, WidgetRef ref, A2uiNode node) {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          height: 160,
+          height: SurfaceMetrics.of(context).mapHeight,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: palette.tray,

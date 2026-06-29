@@ -7,6 +7,7 @@ import 'package:sos_emergency/presentation/catalog/shared/sos_chrome.dart';
 import 'package:sos_emergency/presentation/catalog/shared/sos_icons.dart';
 import 'package:sos_emergency/presentation/surface/binding_resolver.dart';
 import 'package:sos_emergency/presentation/surface/surface_actions.dart';
+import 'package:sos_emergency/presentation/surface/surface_metrics.dart';
 import 'package:sos_emergency/presentation/surface/surface_theme_providers.dart';
 
 const Color _redLight = SosTokens.brandRedLight;
@@ -111,12 +112,13 @@ class _PanicSquare extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = SurfaceMetrics.of(context).panicSize;
     return ConstrainedBox(
-      constraints: const BoxConstraints(
-        minWidth: SosTokens.touchPanic,
-        minHeight: SosTokens.touchPanic,
-        maxWidth: SosTokens.touchPanic,
-        maxHeight: SosTokens.touchPanic,
+      constraints: BoxConstraints(
+        minWidth: size,
+        minHeight: size,
+        maxWidth: size,
+        maxHeight: size,
       ),
       child: DecoratedBox(
         decoration: decoration,

@@ -9,6 +9,7 @@ import 'package:sos_emergency/presentation/catalog/shared/sos_icons.dart';
 import 'package:sos_emergency/presentation/surface/a2ui_renderer.dart';
 import 'package:sos_emergency/presentation/surface/binding_resolver.dart';
 import 'package:sos_emergency/presentation/surface/surface_actions.dart';
+import 'package:sos_emergency/presentation/surface/surface_metrics.dart';
 import 'package:sos_emergency/presentation/surface/surface_theme_providers.dart';
 
 /// `BigChoiceCard` — a large, icon-led, mutually-exclusive choice. One tap
@@ -23,7 +24,9 @@ Widget buildBigChoiceCard(BuildContext context, WidgetRef ref, A2uiNode node) {
   final tint = _choiceTint(iconName);
 
   final card = Container(
-    constraints: const BoxConstraints(minHeight: 150),
+    constraints: BoxConstraints(
+      minHeight: SurfaceMetrics.of(context).choiceMinHeight,
+    ),
     padding: const EdgeInsets.all(SosTokens.space5),
     decoration: BoxDecoration(
       gradient: SosShadows.surfaceGradient(palette),
@@ -162,7 +165,7 @@ class _YesNoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final fg = emphatic ? Colors.white : palette.text;
     return Container(
-      height: SosTokens.touchPrimary,
+      height: SurfaceMetrics.of(context).primaryTouch,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         gradient: emphatic
@@ -312,6 +315,11 @@ class _StepRow extends StatelessWidget {
 /// mic target, unmistakable listening state, live transcript. Inputs: `state`
 /// (idle·listening·processing), `transcript?`.
 Widget buildPushToTalk(BuildContext context, WidgetRef ref, A2uiNode node) {
+  // On short landscape windows (AAOS) the tall mic card is dropped: the
+  // always-on safety rail already exposes a voice button, so showing this one
+  // too would push content off-screen.
+  if (SurfaceMetrics.of(context).isCompact) return const SizedBox.shrink();
+
   final palette = ref.watch(surfacePaletteProvider);
   final propState = ref.resolveString(node, 'state') ?? 'idle';
   final transcript = ref.resolveString(node, 'transcript');

@@ -6,6 +6,7 @@ import 'package:sos_emergency/domain/models/a2ui_node.dart';
 import 'package:sos_emergency/domain/models/severity.dart';
 import 'package:sos_emergency/presentation/catalog/shared/sos_chrome.dart';
 import 'package:sos_emergency/presentation/surface/binding_resolver.dart';
+import 'package:sos_emergency/presentation/surface/surface_metrics.dart';
 import 'package:sos_emergency/presentation/surface/surface_theme_providers.dart';
 
 /// `SeverityBanner` — the tier indicator pinned to the top of the surface.
@@ -19,7 +20,7 @@ Widget buildSeverityBanner(BuildContext context, WidgetRef ref, A2uiNode node) {
   final statusContext = ref.resolveString(node, 'context');
 
   return Container(
-    height: 62,
+    height: SurfaceMetrics.of(context).severityHeight,
     padding: const EdgeInsets.symmetric(horizontal: SosTokens.space5),
     decoration: BoxDecoration(
       color: style.accent.withValues(alpha: 0.12),
