@@ -60,6 +60,19 @@ void main() {
       expect(find.text('Tap to speak'), findsNothing);
       // …because the always-on rail exposes the voice button instead.
       expect(find.bySemanticsLabel('Voice assistant'), findsOneWidget);
+
+      // Choices render as a single horizontal carousel rather than a 4×2 grid
+      // whose second row would fall below the fold.
+      final carousel = find.byKey(const Key('triageChoiceCarousel'));
+      expect(carousel, findsOneWidget);
+      expect(
+        tester
+            .widget<ListView>(
+              find.descendant(of: carousel, matching: find.byType(ListView)),
+            )
+            .scrollDirection,
+        Axis.horizontal,
+      );
     });
 
     testWidgets('rail voice button is on-screen and starts the session', (
@@ -108,8 +121,10 @@ void main() {
   testWidgets('tablet 1194×834 keeps the inline voice card', (tester) async {
     await _pumpHost(tester, size: _tablet);
 
-    // Tall windows are not compact, so PushToTalk still renders.
+    // Tall windows are not compact, so PushToTalk still renders…
     expect(find.text('Tap to speak'), findsOneWidget);
+    // …and the choices keep the 4×2 grid (no carousel).
+    expect(find.byKey(const Key('triageChoiceCarousel')), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

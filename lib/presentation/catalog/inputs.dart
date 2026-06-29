@@ -84,8 +84,17 @@ Widget buildBigChoiceCard(BuildContext context, WidgetRef ref, A2uiNode node) {
 
 /// `ChoiceGrid` — arranges nested `BigChoiceCard`s in a fixed-column grid; the
 /// opening "What's happening?" surface. Input: `columns` (default 4).
+///
+/// On short (automotive) windows a second row would fall below the fold, so the
+/// choices render as a single horizontally-scrollable carousel of large cards
+/// instead — no vertical scrolling, touch targets stay big.
 Widget buildChoiceGrid(BuildContext context, WidgetRef ref, A2uiNode node) {
   final columns = (node.props['columns'] as num?)?.toInt() ?? 4;
+
+  if (SurfaceMetrics.of(context).isCompact) {
+    return _ChoiceCarousel(children: node.children);
+  }
+
   return LayoutBuilder(
     builder: (context, constraints) {
       const gap = SosTokens.space3;
@@ -103,6 +112,37 @@ Widget buildChoiceGrid(BuildContext context, WidgetRef ref, A2uiNode node) {
       );
     },
   );
+}
+
+/// A single-row, horizontally-scrollable row of choice cards for short
+/// (automotive) windows. Cards keep a large fixed footprint so they stay easy
+/// to hit; the row scrolls sideways with a peek at the next card as the
+/// affordance that more choices exist.
+class _ChoiceCarousel extends StatelessWidget {
+  const _ChoiceCarousel({required this.children});
+
+  final List<A2uiNode> children;
+
+  static const double _cardWidth = 208;
+  static const double _cardHeight = 188;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      key: const Key('triageChoiceCarousel'),
+      height: _cardHeight,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const ClampingScrollPhysics(),
+        itemCount: children.length,
+        separatorBuilder: (_, _) => const SizedBox(width: SosTokens.space3),
+        itemBuilder: (context, i) => SizedBox(
+          width: _cardWidth,
+          child: A2uiRenderer(node: children[i]),
+        ),
+      ),
+    );
+  }
 }
 
 /// `YesNoLarge` — two half-surface targets for one critical yes/no. Voice-
