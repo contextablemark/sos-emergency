@@ -1,8 +1,9 @@
-gradle-wrapper.jar
+# NOTE: the Gradle wrapper (gradlew, gradlew.bat, gradle-wrapper.jar) is
+# intentionally tracked so the project is buildable straight after a git clone /
+# branch pull, without regenerating the wrapper. (Flutter's default template
+# ignores these.)
 /.gradle
 /captures/
-/gradlew
-/gradlew.bat
 /local.properties
 GeneratedPluginRegistrant.java
 .cxx/

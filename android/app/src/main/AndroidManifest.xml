@@ -1,8 +1,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for all backend calls (A2UI compose stream + voice WS). The
+         Flutter tool only injects INTERNET into the debug/profile manifests, so
+         release builds must declare it here or networking silently fails. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Hands-free voice (Deepgram). NOT requested yet: on Android the mic/audio
+         layer is currently a no-op stub
+         (lib/data/voice_session/voice_audio_io_stub.dart), so the voice tab is
+         silent on device. Uncomment both once a native mic capture plugin
+         (e.g. package:record) is wired into a non-web voice_audio_io impl. -->
+    <!-- <uses-permission android:name="android.permission.RECORD_AUDIO"/> -->
+    <!-- <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/> -->
+
     <application
         android:label="SOS Emergency"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".MainActivity"
             android:exported="true"
