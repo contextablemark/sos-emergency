@@ -21,13 +21,19 @@ subprojects {
 
 // Some plugins (e.g. flutter_pcm_sound) pin an older compileSdk than their
 // transitive AndroidX dependencies now require (API 34+), which fails the AAR
-// metadata check. Force every plugin module up to the app's compileSdk (36).
-// `withGroovyBuilder` invokes the android extension's compileSdkVersion(int)
-// method dynamically, so the root build needs no Android Gradle Plugin imports.
+// metadata check. Force every plugin module up to the app's compileSdk (36)
+// after it configures. `withGroovyBuilder` invokes compileSdkVersion(int)
+// dynamically, so the root build needs no Android Gradle Plugin imports.
+//
+// :app is force-evaluated by the evaluationDependsOn(":app") above and already
+// targets 36; registering afterEvaluate on an already-evaluated project throws,
+// so skip projects that have finished evaluating.
 subprojects {
-    afterEvaluate {
-        extensions.findByName("android")?.withGroovyBuilder {
-            "compileSdkVersion"(36)
+    if (!project.state.executed) {
+        afterEvaluate {
+            extensions.findByName("android")?.withGroovyBuilder {
+                "compileSdkVersion"(36)
+            }
         }
     }
 }
