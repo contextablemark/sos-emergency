@@ -41,15 +41,17 @@ async def stream_deltas(
     caller can surface 401/400/503 to the client instead of silently stalling.
     """
     payload = {
-        "model": req.model or settings.featherless_model,
+        "model": req.model or settings.render_model,
         "messages": _to_openai_messages(req),
         "stream": True,
+        # Provider-specific tuning (e.g. Gemini's reasoning_effort="none").
+        **settings.render_extra_payload,
     }
     headers = {
-        "Authorization": f"Bearer {settings.featherless_api_key}",
+        "Authorization": f"Bearer {settings.render_api_key}",
         "Content-Type": "application/json",
     }
-    url = f"{settings.featherless_base_url}/chat/completions"
+    url = f"{settings.render_base_url}/chat/completions"
 
     async with client.stream("POST", url, json=payload, headers=headers) as resp:
         if resp.status_code >= 400:

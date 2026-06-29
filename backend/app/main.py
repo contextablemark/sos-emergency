@@ -60,7 +60,7 @@ async def health() -> dict:
     """Liveness check; also reports whether provider API keys are configured."""
     return {
         "status": "ok",
-        "model_key_configured": bool(settings.featherless_api_key),
+        "model_key_configured": bool(settings.render_api_key),
         "voice_key_configured": bool(settings.deepgram_api_key),
     }
 
@@ -87,10 +87,15 @@ async def chat_stream(req: ChatRequest, request: Request):
         req.model,
         len(req.messages),
     )
-    if not settings.featherless_api_key:
+    if not settings.render_api_key:
         return JSONResponse(
             status_code=503,
-            content={"error": "FEATHERLESS_API_KEY is not configured on the server."},
+            content={
+                "error": (
+                    f"No API key configured for render_provider="
+                    f"'{settings.render_provider}'."
+                )
+            },
         )
 
     client = request.app.state.http_client
@@ -153,7 +158,7 @@ async def voice_health() -> dict:
     return {
         "status": "ok",
         "deepgram_key_configured": bool(settings.deepgram_api_key),
-        "featherless_key_configured": bool(settings.featherless_api_key),
+        "featherless_key_configured": bool(settings.render_api_key),
     }
 
 
@@ -175,8 +180,15 @@ async def voice_agent(ws: WebSocket) -> None:
         await ws.send_text(_ndjson({"error": "DEEPGRAM_API_KEY is not configured."}))
         await ws.close()
         return
-    if not settings.featherless_api_key:
-        await ws.send_text(_ndjson({"error": "FEATHERLESS_API_KEY is not configured."}))
+    if not settings.render_api_key:
+        await ws.send_text(
+            _ndjson({
+                "error": (
+                    f"No render model API key configured for render_provider="
+                    f"'{settings.render_provider}'."
+                )
+            })
+        )
         await ws.close()
         return
 
@@ -240,11 +252,12 @@ async def voice_agent(ws: WebSocket) -> None:
             # delta.content) or an otherwise empty completion. Surface it as an
             # error instead of a hollow `done`.
             if content_chars == 0:
-                model_name = model_override or settings.featherless_model
+                model_name = model_override or settings.render_model
                 raise RuntimeError(
                     f"render model '{model_name}' returned no A2UI content "
                     "(it may be a reasoning or gated model — use a non-reasoning "
-                    "instruct model such as Qwen/Qwen2.5-72B-Instruct)"
+                    "instruct model such as gemini-2.5-flash or "
+                    "Qwen/Qwen2.5-72B-Instruct)"
                 )
             await send_json({"done": True})
             status = '{"status":"shown"}'
