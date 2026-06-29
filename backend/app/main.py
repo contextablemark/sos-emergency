@@ -30,6 +30,15 @@ from .schemas import ChatRequest, Message
 from .voice_prompt import CALL_EMERGENCY_FUNCTION_NAME, RENDER_FUNCTION_NAME
 
 logger = logging.getLogger("sos.voice")
+# Give this logger its own stderr handler at INFO. Uvicorn doesn't configure the
+# root logger, so without this our INFO logs (transcripts, render decisions) get
+# swallowed by logging.lastResort, which only emits WARNING+.
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(levelname)s:     %(message)s"))
+    logger.addHandler(_handler)
+    logger.propagate = False
 
 HTTP_TIMEOUT = httpx.Timeout(connect=10.0, read=300.0, write=10.0, pool=10.0)
 
@@ -284,12 +293,14 @@ async def voice_agent(ws: WebSocket) -> None:
         if msg_type == "FunctionCallRequest":
             for call in getattr(msg, "functions", []) or []:
                 if call.name == RENDER_FUNCTION_NAME:
+                    logger.info("↳ render requested: %s", call.arguments)
                     for active_task in list(render_tasks):
                         active_task.cancel()
                     task = asyncio.create_task(render_ui(call))
                     render_tasks.add(task)
                     task.add_done_callback(render_tasks.discard)
                 elif call.name == CALL_EMERGENCY_FUNCTION_NAME:
+                    logger.info("↳ call_emergency requested")
                     await send_json({"action": "call_emergency"})
                     if session is not None:
                         with contextlib.suppress(Exception):
@@ -299,12 +310,10 @@ async def voice_agent(ws: WebSocket) -> None:
                                 content='{"status":"dialing"}',
                             )
         elif msg_type == "ConversationText":
-            await send_json(
-                {"transcript": {
-                    "role": getattr(msg, "role", None),
-                    "content": getattr(msg, "content", None),
-                }}
-            )
+            role = getattr(msg, "role", None)
+            content = getattr(msg, "content", None)
+            logger.info("🗣  %s: %s", role, content)
+            await send_json({"transcript": {"role": role, "content": content}})
         elif msg_type in _FORWARDED_EVENTS:
             await send_json({"event": msg_type})
         elif msg_type in ("Error", "Warning"):
@@ -314,11 +323,28 @@ async def voice_agent(ws: WebSocket) -> None:
         async with DeepgramAgentSession(on_event=on_agent_event) as opened:
             session = opened
             # Pump: mic audio (bytes) up to Deepgram; text frames are control.
+            audio_frames = 0
+            audio_bytes = 0
             while True:
                 frame = await ws.receive()
                 if frame.get("type") == "websocket.disconnect":
+                    logger.info(
+                        "client disconnected after %d audio frames (%d bytes)",
+                        audio_frames, audio_bytes,
+                    )
                     break
                 if (data := frame.get("bytes")) is not None:
+                    if audio_frames == 0:
+                        logger.info("🎤 first mic frame: %d bytes", len(data))
+                    audio_frames += 1
+                    audio_bytes += len(data)
+                    # Throttled heartbeat so we can see audio actually flowing
+                    # (16 kHz linear16 mono ≈ 32000 bytes/sec).
+                    if audio_frames % 50 == 0:
+                        logger.info(
+                            "🎤 mic in: %d frames, %d bytes total",
+                            audio_frames, audio_bytes,
+                        )
                     await session.send_audio(data)
                 # Text frames are reserved for future control messages; ignore.
     except WebSocketDisconnect:
